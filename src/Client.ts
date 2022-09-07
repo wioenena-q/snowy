@@ -28,7 +28,7 @@ export class Client extends BaseClient {
   /**
 	 * @returns {Snowflake[]} - The owners of the bot.
 	 */
-	 public get owners (): Snowflake[] {
+  public get owners (): Snowflake[] {
     return this.#owners;
   }
 }
