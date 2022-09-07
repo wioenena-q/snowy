@@ -14,5 +14,6 @@
 		"module": "CommonJS",
 		"target": "ESNext",
 		"declarationDir": "dist/types",
+		"removeComments": false
 	}
 }
