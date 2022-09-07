@@ -15,7 +15,11 @@
       "error",
       "single"
     ],
+    "no-tabs": "off",
     "semi": "off",
-    "@typescript-eslint/semi": "warn"
+    "@typescript-eslint/semi": [
+      "warn",
+      "always"
+    ]
   }
 }
