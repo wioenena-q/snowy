@@ -8,7 +8,7 @@ import { Client as BaseClient } from 'discord.js';
 export class Client extends BaseClient {
   #owners: Snowflake[];
 
-  public constructor ({ owners, token }: SnowyClientOptions, clientOptions: ClientOptions) {
+  public constructor ({ owners, token, clientOptions }: SnowyClientOptions) {
     super(clientOptions);
     this.token = token ?? null;
     this.#owners = owners ?? [];
@@ -36,4 +36,5 @@ export class Client extends BaseClient {
 export interface SnowyClientOptions {
   token?: string
   owners?: Snowflake[]
+  clientOptions: ClientOptions
 }
