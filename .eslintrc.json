@@ -20,6 +20,7 @@
     "@typescript-eslint/semi": [
       "warn",
       "always"
-    ]
+    ],
+    "@typescript-eslint/space-before-function-paren": "off"
   }
 }
