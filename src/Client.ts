@@ -15,13 +15,6 @@ export class Client extends BaseClient {
   }
 
   /**
-	 * @returns {Snowflake[]} - The owners of the bot.
-	 */
-  public get owners (): Snowflake[] {
-    return this.#owners;
-  }
-
-  /**
 	 * Checks if the user is an owner of the bot.
 	 * @param {UserResolvable} idOrInstance - The ID or instance of the user to check.
 	 * @returns {boolean} - Whether or not the user is an bot owner.
@@ -30,6 +23,13 @@ export class Client extends BaseClient {
     const id = this.users.resolveId(idOrInstance);
 
     return (id != null) ? this.#owners.includes(id) : false;
+  }
+
+  /**
+	 * @returns {Snowflake[]} - The owners of the bot.
+	 */
+	 public get owners (): Snowflake[] {
+    return this.#owners;
   }
 }
 
