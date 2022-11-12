@@ -1,11 +1,11 @@
 {
 	"extends": "@wioenena.q/tsconfig",
 	"include": [
-		"src/**/*.ts"
+		"src/**/*.ts",
+		"test/**/*.spec.ts"
 	],
 	"exclude": [
 		"node_modules",
-		"**/*.spec.ts",
 		"**/*.d.ts",
 	],
 	"compilerOptions": {
