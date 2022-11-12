@@ -28,8 +28,9 @@ export class ModuleManager extends EventEmitter {
 		; (function readDir(path: string) {
 			const files = readdirSync(path, { withFileTypes: true });
 			files.forEach((file: Dirent) => {
-				if (file.isDirectory()) readDir(join(path, file.name));
-				else result.push(join(path, file.name));
+				const filePath = join(path, file.name);
+				if (file.isDirectory()) readDir(filePath);
+				else result.push(filePath);
 			});
 		})(this.#options.path);
 
