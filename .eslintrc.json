@@ -21,6 +21,8 @@
       "warn",
       "always"
     ],
-    "@typescript-eslint/space-before-function-paren": "off"
+    "@typescript-eslint/space-before-function-paren": "off",
+    "indent": "off",
+    "@typescript-eslint/indent": "off"
   }
 }
