@@ -12,9 +12,9 @@ export class UniqueMap<K extends string, V> extends Map<K, V> {
    * @returns This map
    */
   public override set(key: K, value: V): this {
-    if (this.has(key)) {
+    if (this.has(key))
       throw new SnowyError(ErrorTags.NOT_UNIQUE, key);
-    }
+
     return super.set(key, value);
   }
 }
