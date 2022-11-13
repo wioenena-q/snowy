@@ -27,6 +27,7 @@
     "curly": [
       "error",
       "multi"
-    ]
+    ],
+    "@typescript-eslint/strict-boolean-expressions": "off"
   }
 }
