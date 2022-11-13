@@ -2,10 +2,13 @@
 export enum ErrorTags {
   NOT_UNIQUE = 'NOT_UNIQUE',
   TAG_NOT_FOUND = 'TAG_NOT_FOUND',
-  NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
+  METHOD_NOT_IMPLEMENTED = 'METHOD_NOT_IMPLEMENTED',
   VALUE_IS_NOT_OF_DESIRED_TYPE = 'VALUE_IS_NOT_OF_DESIRED_TYPE',
   VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS = 'VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS',
   MODULE_DOES_NOT_HAVE_A_PATH = 'MODULE_DOES_NOT_HAVE_A_PATH',
+  MODULE_NOT_FOUND = 'MODULE_NOT_FOUND',
+  EMITTER_NOT_FOUND = 'EMITTER_NOT_FOUND',
+  INVALID_LISTENER_TYPE = 'INVALID_LISTENER_TYPE'
 }
 
 /**
@@ -35,11 +38,14 @@ const tagToMessage: Record<ErrorTags, (...params: string[]) => string> = {
     `The key '${key}' is not unique.`,
   [ErrorTags.TAG_NOT_FOUND]: (tag: string) =>
     `The tag '${tag}' was not found.`,
-  [ErrorTags.NOT_IMPLEMENTED]: (cls: string, method: string) =>
+  [ErrorTags.METHOD_NOT_IMPLEMENTED]: (cls: string, method: string) =>
     `The method '${method}' of the class '${cls}' is not implemented.`,
   [ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE]: (type: string, value: string, received: string) =>
     `The value '${value}' is not an ${type}. Received type: ${received} and required type: ${type}.`,
   [ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS]: (cls: string, value: string, received: string) =>
     `The value '${value}' is not an instance of ${cls}. Received type: ${received} and required type: ${cls}.`,
-  [ErrorTags.MODULE_DOES_NOT_HAVE_A_PATH]: (modID: string) => `The module '${modID}' does not have a path.`
+  [ErrorTags.MODULE_DOES_NOT_HAVE_A_PATH]: (modID: string) => `The module '${modID}' does not have a path.`,
+  [ErrorTags.MODULE_NOT_FOUND]: (modID: string) => `The module '${modID}' was not found.`,
+  [ErrorTags.EMITTER_NOT_FOUND]: (emitterID: string) => `The emitter '${emitterID}' was not found.`,
+  [ErrorTags.INVALID_LISTENER_TYPE]: (type: string) => `The listener type '${type}' is invalid.`
 };
