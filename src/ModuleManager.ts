@@ -23,7 +23,7 @@ export class ModuleManager extends EventEmitter {
 	 */
 	public constructor(client: Client, options: ModuleManagerOptions) {
 		super();
-		this.#modules = new UniqueMap<string, SnowyModule>();
+		this.#modules = new UniqueMap();
 		this.#options = options;
 		this.#context = new SnowyContext(client, this);
 	}
@@ -52,7 +52,7 @@ export class ModuleManager extends EventEmitter {
 	 * @param {string} path The path of the module.
 	 * @returns {Promise<SnowyModule|undefined>} The module.
 	 */
-	public async loadModule(path: string): Promise<SnowyModule | undefined> {
+	public async loadModule(path: string, isReload = false): Promise<SnowyModule | undefined> {
 		const { default: mod } = await import(path);
 		if (mod === undefined) return;
 		// Create a new instance of the module.
@@ -63,7 +63,7 @@ export class ModuleManager extends EventEmitter {
 			});
 
 			instance.path = path;
-			this.register(instance);
+			this.register(instance, isReload);
 			return instance;
 		}
 	}
@@ -72,10 +72,10 @@ export class ModuleManager extends EventEmitter {
 	 * Load the modules.
 	 * @returns {this}
 	 */
-	public async loadModules(): Promise<this> {
+	public async loadModules(filter = (path: string) => true): Promise<this> {
 		const filePaths = this.getModuleFilePaths();
 		for await (const filePath of filePaths)
-			await this.loadModule(filePath);
+			if (filter(filePath)) await this.loadModule(filePath);
 
 		return this;
 	}
@@ -85,11 +85,12 @@ export class ModuleManager extends EventEmitter {
 	 * @param {string | SnowyModule} modOrId The module or the id of the module.
 	 * @returns {void}
 	 */
-	public remove(modOrId: string | SnowyModule): void {
+	public remove(modOrId: string | SnowyModule, isReload = false): SnowyModule {
 		const mod = isString(modOrId) ? this.modules.get(modOrId) : modOrId;
-		if (mod === undefined) return;
+		if (mod === undefined) throw new SnowyError(ErrorTags.MODULE_NOT_FOUND, modOrId as string);
 		this.deregister(mod);
-		this.emit('moduleDelete', mod);
+		if (!isReload) this.emit('moduleDelete', mod);
+		return mod;
 	}
 
 	/**
@@ -107,9 +108,9 @@ export class ModuleManager extends EventEmitter {
 	 * @param {SnowyModule} mod The module to register.
 	 * @returns {this}
 	 */
-	public register(mod: SnowyModule): this {
+	public register(mod: SnowyModule, isReload = false): this {
 		this.#modules.set(mod.id, mod);
-		this.emit('moduleCreate', mod);
+		if (!isReload) this.emit('moduleCreate', mod);
 		return this;
 	}
 
@@ -129,11 +130,10 @@ export class ModuleManager extends EventEmitter {
 	 * @returns {Promise<SnowyModule|undefined>} The reloaded module.
 	 */
 	public async reload(modOrId: string | SnowyModule): Promise<SnowyModule | undefined> {
-		const mod = isString(modOrId) ? this.modules.get(modOrId) : modOrId;
-		if (mod === undefined) return;
+		const mod = this.remove(modOrId, true);
+		if (!mod.reloadable) return;
 		if (!isString(mod.path)) throw new SnowyError(ErrorTags.MODULE_DOES_NOT_HAVE_A_PATH, mod.id);
-		this.deregister(mod);
-		const newMod = await this.loadModule(mod.path);
+		const newMod = await this.loadModule(mod.path, true);
 		if (!newMod) return;
 		this.emit('moduleReload', newMod);
 		return newMod;
