@@ -1,6 +1,9 @@
 export enum ErrorTags {
   NOT_UNIQUE = 'NOT_UNIQUE',
-  TAG_NOT_FOUND = 'TAG_NOT_FOUND'
+  TAG_NOT_FOUND = 'TAG_NOT_FOUND',
+  NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
+  VALUE_IS_NOT_OF_DESIRED_TYPE = 'VALUE_IS_NOT_OF_DESIRED_TYPE',
+  VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS = 'VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS',
 }
 
 /**
@@ -26,8 +29,14 @@ export class SnowyError extends Error {
 }
 
 const tagToMessage: Record<ErrorTags, (...params: string[]) => string> = {
-  [ErrorTags.NOT_UNIQUE]: (key: string, extra?: string) =>
-    `The key '${key}' is not unique.${extra !== undefined ? ` ${extra}` : ''}`,
-  [ErrorTags.TAG_NOT_FOUND]: (tag: string, extra?: string) =>
-    `The tag '${tag}' was not found.${extra !== undefined ? ` ${extra}` : ''}`
+  [ErrorTags.NOT_UNIQUE]: (key: string) =>
+    `The key '${key}' is not unique.`,
+  [ErrorTags.TAG_NOT_FOUND]: (tag: string) =>
+    `The tag '${tag}' was not found.`,
+  [ErrorTags.NOT_IMPLEMENTED]: (cls: string, method: string) =>
+    `The method '${method}' of the class '${cls}' is not implemented.`,
+  [ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE]: (type: string, value: string, received: string) =>
+    `The value '${value}' is not an ${type}. Received type: ${received} and required type: ${type}.`,
+  [ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS]: (cls: string, value: string, received: string) =>
+    `The value '${value}' is not an instance of ${cls}. Received type: ${received} and required type: ${cls}.`
 };
