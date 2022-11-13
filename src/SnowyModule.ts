@@ -19,6 +19,10 @@ export class SnowyModule implements SnowyModuleOptions {
 	 * @type {boolean}
 	 */
 	public reloadable!: boolean;
+	/**
+	 * Path of the module.
+	 * @type {string}
+	 */
 	public path: string | null = null;
 	#context: SnowyContext;
 
@@ -30,12 +34,13 @@ export class SnowyModule implements SnowyModuleOptions {
 	public constructor(context: SnowyContext, id: string, options: SnowyModuleOptions) {
 		if (!(context instanceof SnowyContext))
 			throw new SnowyError(ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS, 'SnowyContext', 'context', typeof context);
-
 		if (!isString(id)) throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'string', 'id', typeof id);
+		if (!isObject<SnowyModuleOptions>(options))
+			throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'object', 'options', typeof options);
 
 		this.#context = context;
 		this.id = id;
-		this.initialize(options);
+		this.reloadable = options.reloadable ?? true;
 	}
 
 	/**
@@ -56,15 +61,8 @@ export class SnowyModule implements SnowyModuleOptions {
 		await this.#context.manager.reload(this.id);
 	}
 
-	/**
-	 *
-	 * Initialize props to module.
-	 * @param {SnowyModuleOptions} options The options of the module.
-	 */
-	protected initialize(options: SnowyModuleOptions): void {
-		if (!isObject<SnowyModuleOptions>(options))
-			throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'object', 'options', typeof options);
-		this.reloadable = options.reloadable ?? true;
+	public exec(..._: unknown[]): unknown {
+		throw new SnowyError(ErrorTags.METHOD_NOT_IMPLEMENTED, 'SnowyModule', 'exec');
 	}
 
 	/**
