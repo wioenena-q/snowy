@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { readdirSync, type Dirent } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import type { Client } from './Client';
 import { SnowyContext } from './SnowyContext';
 import { ErrorTags, SnowyError } from './SnowyError';
@@ -62,7 +62,13 @@ export class ModuleManager extends EventEmitter {
 				path
 			});
 
+			// Set props.
 			instance.path = path;
+			if (this.options.automateCategories && !isString(instance.category)) {
+				const category = path.split(sep).slice(-2).at(0);
+				if (category !== undefined) instance.category = category;
+			}
+
 			this.register(instance, isReload);
 			return instance;
 		}
@@ -168,6 +174,7 @@ export class ModuleManager extends EventEmitter {
 
 export interface ModuleManagerOptions {
 	path: string // The path to the modules.
+	automateCategories?: boolean // Whether to automate the categories of the modules.
 }
 
 export interface ModuleManager extends EventEmitter {
