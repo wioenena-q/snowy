@@ -1,9 +1,11 @@
+
 export enum ErrorTags {
   NOT_UNIQUE = 'NOT_UNIQUE',
   TAG_NOT_FOUND = 'TAG_NOT_FOUND',
   NOT_IMPLEMENTED = 'NOT_IMPLEMENTED',
   VALUE_IS_NOT_OF_DESIRED_TYPE = 'VALUE_IS_NOT_OF_DESIRED_TYPE',
   VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS = 'VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS',
+  MODULE_DOES_NOT_HAVE_A_PATH = 'MODULE_DOES_NOT_HAVE_A_PATH',
 }
 
 /**
@@ -38,5 +40,6 @@ const tagToMessage: Record<ErrorTags, (...params: string[]) => string> = {
   [ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE]: (type: string, value: string, received: string) =>
     `The value '${value}' is not an ${type}. Received type: ${received} and required type: ${type}.`,
   [ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS]: (cls: string, value: string, received: string) =>
-    `The value '${value}' is not an instance of ${cls}. Received type: ${received} and required type: ${cls}.`
+    `The value '${value}' is not an instance of ${cls}. Received type: ${received} and required type: ${cls}.`,
+  [ErrorTags.MODULE_DOES_NOT_HAVE_A_PATH]: (modID: string) => `The module '${modID}' does not have a path.`
 };
