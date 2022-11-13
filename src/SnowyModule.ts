@@ -7,7 +7,7 @@ import { isFunction, isObject, isString } from './Utils';
  *
  * @classdesc The base class for all modules.
  */
-export class SnowyModule implements SnowyModuleOptions {
+export class SnowyModule {
 	/**
 	 * The id of the module.
 	 * @readonly
@@ -24,6 +24,12 @@ export class SnowyModule implements SnowyModuleOptions {
 	 * @type {string}
 	 */
 	public path: string | null = null;
+	/**
+	 * Category of the module.
+	 * @type {string | null}
+	 */
+	public category?: string | null;
+
 	#context: SnowyContext;
 
 	/**
@@ -41,6 +47,7 @@ export class SnowyModule implements SnowyModuleOptions {
 		this.#context = context;
 		this.id = id;
 		this.reloadable = options.reloadable ?? true;
+		this.category = options.category ?? null;
 	}
 
 	/**
@@ -84,6 +91,7 @@ export class SnowyModule implements SnowyModuleOptions {
 
 export interface SnowyModuleOptions {
 	reloadable?: boolean
+	category?: string | null
 }
 
 export interface BaseExtendedSnowyModule<T extends Record<PropertyKey, unknown>> extends SnowyModule {
