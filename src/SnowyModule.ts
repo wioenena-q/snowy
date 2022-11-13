@@ -6,7 +6,7 @@ import { isFunction, isObject, isString } from './Utils';
  *
  * @classdesc The base class for all modules.
  */
-export class SnowyModule implements SnowyModuleOptions {
+export abstract class SnowyModule implements SnowyModuleOptions {
 	/**
 	 * The id of the module.
 	 * @readonly
