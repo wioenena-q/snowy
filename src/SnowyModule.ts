@@ -1,3 +1,4 @@
+import type { ExtendedSnowyModuleConstructor } from './ModuleManager';
 import { SnowyContext } from './SnowyContext';
 import { ErrorTags, SnowyError } from './SnowyError';
 import { isFunction, isObject, isString } from './Utils';
@@ -6,7 +7,7 @@ import { isFunction, isObject, isString } from './Utils';
  *
  * @classdesc The base class for all modules.
  */
-export abstract class SnowyModule implements SnowyModuleOptions {
+export class SnowyModule implements SnowyModuleOptions {
 	/**
 	 * The id of the module.
 	 * @readonly
@@ -71,7 +72,7 @@ export abstract class SnowyModule implements SnowyModuleOptions {
 	 * @param {unknown} value The value to check
 	 * @returns {boolean} Whether the value is a SnowyModule
 	 */
-	public static isSnowyModuleConstructor(value: unknown): value is SnowyModule {
+	public static isSnowyModuleConstructor(value: unknown): value is ExtendedSnowyModuleConstructor {
 		return isFunction(value) && value.prototype instanceof SnowyModule;
 	}
 
