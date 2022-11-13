@@ -12,6 +12,12 @@ export abstract class Listener extends SnowyModule {
 	#event!: string;
 	#type: 'on' | 'once';
 
+	/**
+	 *
+	 * @param {SnowyContext} context The context of the listener.
+	 * @param {string} id The id of the listener.
+	 * @param {ListenerOptions} options The options of the listener.
+	 */
 	public constructor(context: SnowyContext, id: string, options: ListenerOptions) {
 		super(context, id, options);
 		this.#emitter = options.emitter;
