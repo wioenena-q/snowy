@@ -13,7 +13,7 @@ import { isString } from './Utils';
  * @extends {EventEmitter}
  */
 export class ModuleManager extends EventEmitter {
-	#modules: UniqueMap<string, ExtendedSnowyModule>;
+	#modules: UniqueMap<string, SnowyModule>;
 	#options: ModuleManagerOptions;
 	#context: SnowyContext;
 
@@ -23,7 +23,7 @@ export class ModuleManager extends EventEmitter {
 	 */
 	public constructor(client: Client, options: ModuleManagerOptions) {
 		super();
-		this.#modules = new UniqueMap<string, ExtendedSnowyModule>();
+		this.#modules = new UniqueMap<string, SnowyModule>();
 		this.#options = options;
 		this.#context = new SnowyContext(client, this);
 	}
@@ -52,15 +52,15 @@ export class ModuleManager extends EventEmitter {
 	 * @param {string} path The path of the module.
 	 * @returns {Promise<SnowyModule|undefined>} The module.
 	 */
-	public async loadModule(path: string): Promise<ExtendedSnowyModule | undefined> {
-		const { default: mod }: { default: ExtendedSnowyModule } = await import(path);
+	public async loadModule(path: string): Promise<SnowyModule | undefined> {
+		const { default: mod } = await import(path);
 		if (mod === undefined) return;
 		// Create a new instance of the module.
 		if (SnowyModule.isSnowyModuleConstructor(mod)) {
 			// eslint-disable-next-line new-cap
 			const instance = new mod(this.context, {
 				path
-			}) as ExtendedSnowyModule;
+			});
 
 			instance.path = path;
 			this.register(instance);
@@ -82,10 +82,10 @@ export class ModuleManager extends EventEmitter {
 
 	/**
 	 * Remove a module.
-	 * @param modOrId The module or the id of the module.
+	 * @param {string | SnowyModule} modOrId The module or the id of the module.
 	 * @returns {void}
 	 */
-	public remove(modOrId: string | ExtendedSnowyModule): void {
+	public remove(modOrId: string | SnowyModule): void {
 		const mod = isString(modOrId) ? this.modules.get(modOrId) : modOrId;
 		if (mod === undefined) return;
 		this.deregister(mod);
@@ -104,10 +104,10 @@ export class ModuleManager extends EventEmitter {
 
 	/**
 	 * Register a module.
-	 * @param {ExtendedSnowyModule} mod The module to register.
+	 * @param {SnowyModule} mod The module to register.
 	 * @returns {this}
 	 */
-	public register(mod: ExtendedSnowyModule): this {
+	public register(mod: SnowyModule): this {
 		this.#modules.set(mod.id, mod);
 		this.emit('moduleCreate', mod);
 		return this;
@@ -115,20 +115,20 @@ export class ModuleManager extends EventEmitter {
 
 	/**
 	 * Deregister a module.
-	 * @param {ExtendedSnowyModule} mod module to be deregistered.
-	 * @returns {this}
+	 * @param {SnowyModule} mod module to be deregistered.
+	 * @returns {void}
 	 */
-	public deregister(mod: ExtendedSnowyModule): void {
+	public deregister(mod: SnowyModule): void {
 		this.#modules.delete(mod.id);
 		if (mod.path !== null && Reflect.has(require.cache, mod.path)) Reflect.deleteProperty(require.cache, mod.path);
 	}
 
 	/**
 	 * Reload a module.
-	 * @param mod The module to reload.
-	 * @returns {Promise<ExtendedSnowyModule>} The reloaded module.
+	 * @param {string | SnowyModule} modOrId The module to reload.
+	 * @returns {Promise<SnowyModule|undefined>} The reloaded module.
 	 */
-	public async reload(modOrId: string | ExtendedSnowyModule): Promise<ExtendedSnowyModule | undefined> {
+	public async reload(modOrId: string | SnowyModule): Promise<SnowyModule | undefined> {
 		const mod = isString(modOrId) ? this.modules.get(modOrId) : modOrId;
 		if (mod === undefined) return;
 		if (!isString(mod.path)) throw new SnowyError(ErrorTags.MODULE_DOES_NOT_HAVE_A_PATH, mod.id);
@@ -139,6 +139,10 @@ export class ModuleManager extends EventEmitter {
 		return newMod;
 	}
 
+	/**
+	 * Reload all modules.
+	 * @returns {Promise<this>}
+	 */
 	public async reloadAll(): Promise<this> {
 		for await (const mod of this.modules.values())
 			await this.reload(mod);
@@ -149,7 +153,7 @@ export class ModuleManager extends EventEmitter {
 	/**
 	 * @returns {UniqueMap<string, SnowyModule>} The modules of the bot.
 	 */
-	public get modules(): UniqueMap<string, ExtendedSnowyModule> { return this.#modules; }
+	public get modules(): UniqueMap<string, SnowyModule> { return this.#modules; }
 
 	/**
 	 * @returns {ModuleManagerOptions} The options of the manager.
@@ -175,11 +179,9 @@ export interface ModuleManager extends EventEmitter {
 }
 
 export interface ModuleManagerEvents {
-	'moduleCreate': (module: ExtendedSnowyModule) => void
-	'moduleDelete': (module: ExtendedSnowyModule) => void
-	'moduleReload': (module: ExtendedSnowyModule) => void
+	'moduleCreate': (module: SnowyModule) => void
+	'moduleDelete': (module: SnowyModule) => void
+	'moduleReload': (module: SnowyModule) => void
 }
 
-export interface ExtendedSnowyModule extends SnowyModule {
-	new(context: SnowyContext, options: SnowyModuleOptions & { path: string }): SnowyModule
-};
+export type ExtendedSnowyModuleConstructor = new (context: SnowyContext, options: SnowyModuleOptions & { path: string }) => SnowyModule;
