@@ -23,6 +23,10 @@
     ],
     "@typescript-eslint/space-before-function-paren": "off",
     "indent": "off",
-    "@typescript-eslint/indent": "off"
+    "@typescript-eslint/indent": "off",
+    "curly": [
+      "error",
+      "multi"
+    ]
   }
 }
