@@ -14,8 +14,8 @@ export class ListenerManager extends ModuleManager {
 
 	/**
 	 *
-	 * @param client The client of the listener manager.
-	 * @param options The options of the listener manager.
+	 * @param {Client} client The client of the listener manager.
+	 * @param { ListenerManagerOptions} options The options of the listener manager.
 	 */
 	public constructor(client: Client, options: ListenerManagerOptions) {
 		super(client, options);
@@ -33,7 +33,7 @@ export class ListenerManager extends ModuleManager {
 
 	/**
 	 * Remove listener from the listener manager.
-	 * @param modOrId The module or the id of the module.
+	 * @param {string | Listener} modOrId The module or the id of the module.
 	 * @returns {Listener}
 	 */
 	public override remove(modOrId: string | Listener): Listener {
@@ -46,8 +46,8 @@ export class ListenerManager extends ModuleManager {
 
 	/**
 	 * Register a listener.
-	 * @param mod The listener to register.
-	 * @param isReload Whether the listener is being reloaded.
+	 * @param {Listener} mod The listener to register.
+	 * @param {boolean} [isReload] Whether the listener is being reloaded.
 	 */
 	public override register(mod: Listener, isReload?: boolean): this {
 		super.register(mod, isReload);
@@ -66,6 +66,11 @@ export class ListenerManager extends ModuleManager {
 		for (const [id, emitter] of Object.entries(emitters))
 			this.addEmitter(id, emitter);
 	}
+
+	/**
+	 * @returns {UniqueMap<string, EventEmitter>} The emitters of the listener manager.
+	 */
+	public get emitters(): UniqueMap<string, EventEmitter> { return this.#emitters; }
 }
 
 export interface ListenerManagerOptions extends ModuleManagerOptions {
