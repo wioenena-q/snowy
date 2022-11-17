@@ -1,7 +1,7 @@
 import type { Message, PermissionsString } from 'discord.js';
 import type { SnowyContext } from '../SnowyContext';
 import { ErrorTags, SnowyError } from '../SnowyError';
-import type { MaybeArray } from '../Utils';
+import { getType, MaybeArray } from '../Utils';
 import { BaseCommand, BaseCommandOptions } from './BaseCommand';
 
 export abstract class RawCommand extends BaseCommand {
@@ -14,13 +14,13 @@ export abstract class RawCommand extends BaseCommand {
 	/**
 	 *
 	 * The permissions of the user using the command.
-	 * @type {MaybeArray<PermissionsString> | RawCommandPermissionFunction | null}
+	 * @type {ValidPermissionDefinitions | null}
 	 */
 	public userPermissions?: MaybeArray<PermissionsString> | RawCommandPermissionFunction | null;
 	/**
 	 *
 	 * The permissions of the bot for the command.
-	 * @type {MaybeArray<PermissionsString> | RawCommandPermissionFunction | null}
+	 * @type {ValidPermissionDefinition | null}
 	 */
 	public botPermissions?: MaybeArray<PermissionsString> | RawCommandPermissionFunction | null;
 
@@ -34,7 +34,7 @@ export abstract class RawCommand extends BaseCommand {
 		super(context, id, options);
 
 		if (!Array.isArray(options.aliases))
-			throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'Array<string>', 'aliases', typeof options.aliases);
+			throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'Array<string>', 'aliases', getType(options.aliases));
 
 		this.aliases = options.aliases;
 		this.userPermissions = options.userPermissions ?? null;
@@ -44,8 +44,10 @@ export abstract class RawCommand extends BaseCommand {
 
 export interface RawCommandOptions extends BaseCommandOptions {
 	aliases: string[]
-	userPermissions?: MaybeArray<PermissionsString> | RawCommandPermissionFunction
-	botPermissions?: MaybeArray<PermissionsString> | RawCommandPermissionFunction
+	userPermissions?: ValidPermissionDefinitions
+	botPermissions?: ValidPermissionDefinitions
 }
 
 export type RawCommandPermissionFunction = (message: Message) => boolean | Promise<boolean>;
+
+export type ValidPermissionDefinitions = MaybeArray<PermissionsString> | RawCommandPermissionFunction;
