@@ -1,7 +1,7 @@
 import type { ExtendedSnowyModuleConstructor } from './ModuleManager';
 import { SnowyContext } from './SnowyContext';
 import { ErrorTags, SnowyError } from './SnowyError';
-import { isFunction, isObject, isString, Nullable } from './Utils';
+import { getType, isFunction, isObject, isString, Nullable } from './Utils';
 
 /**
  *
@@ -39,8 +39,10 @@ export class SnowyModule {
 	 */
 	public constructor(context: SnowyContext, id: string, options: SnowyModuleOptions) {
 		if (!(context instanceof SnowyContext))
-			throw new SnowyError(ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS, 'SnowyContext', 'context', typeof context);
-		if (!isString(id)) throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'string', 'id', typeof id);
+			throw new SnowyError(ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS, 'SnowyContext', 'context', getType(context));
+		if (!isString(id))
+			throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'string', 'id', getType(id));
+
 		if (!isObject<SnowyModuleOptions>(options))
 			throw new SnowyError(ErrorTags.InvalidArgument, 'options', 'The options must be an object.');
 
