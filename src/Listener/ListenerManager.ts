@@ -73,5 +73,4 @@ export class ListenerManager extends ModuleManager {
 	public get emitters(): UniqueMap<string, EventEmitter> { return this.#emitters; }
 }
 
-export interface ListenerManagerOptions extends ModuleManagerOptions {
-}
+export interface ListenerManagerOptions extends ModuleManagerOptions { }
