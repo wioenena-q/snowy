@@ -1,7 +1,7 @@
 import type { ExtendedSnowyModuleConstructor } from './ModuleManager';
 import { SnowyContext } from './SnowyContext';
 import { ErrorTags, SnowyError } from './SnowyError';
-import { isFunction, isObject, isString } from './Utils';
+import { isFunction, isObject, isString, Nullable } from './Utils';
 
 /**
  *
@@ -21,14 +21,14 @@ export class SnowyModule {
 	public reloadable!: boolean;
 	/**
 	 * Path of the module.
-	 * @type {string}
+	 * @type {Nullable<string>}
 	 */
-	public path: string | null = null;
+	public readonly path: Nullable<string> = null;
 	/**
 	 * Category of the module.
-	 * @type {string | null}
+	 * @type {Nullable<string>}
 	 */
-	public category?: string | null;
+	public readonly category?: Nullable<string>;
 
 	#context: SnowyContext;
 
@@ -42,7 +42,7 @@ export class SnowyModule {
 			throw new SnowyError(ErrorTags.VALUE_IS_NOT_INSTANCE_OF_DESIRED_CLASS, 'SnowyContext', 'context', typeof context);
 		if (!isString(id)) throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'string', 'id', typeof id);
 		if (!isObject<SnowyModuleOptions>(options))
-			throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'object', 'options', typeof options);
+			throw new SnowyError(ErrorTags.InvalidArgument, 'options', 'The options must be an object.');
 
 		this.#context = context;
 		this.id = id;
