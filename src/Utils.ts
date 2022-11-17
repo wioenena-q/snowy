@@ -7,3 +7,7 @@ export const isFunction = (value: unknown): value is (...args: unknown[]) => unk
 	typeof value === 'function';
 
 export const isString = (value: unknown): value is string => typeof value === 'string';
+
+export type MaybeArray<T> = T | T[];
+
+export type Nullable<T> = T | null;
