@@ -1,6 +1,9 @@
 dist/
 node_modules/
-yarn.lock
-.npmignore
-*.log
 .vscode/
+.ignore/
+
+.npmignore
+yarn.lock
+*.log
+.env
