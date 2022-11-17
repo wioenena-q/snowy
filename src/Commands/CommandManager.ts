@@ -104,17 +104,14 @@ export class CommandManager extends ModuleManager {
 	 */
 	private getCommandNameAndArgs(prefix: Nullable<string>, content: string): { commandName: Nullable<string>, args: string[] } {
 		let commandName: Nullable<string> = null;
-		let args = [] as string[];
 
 		if (prefix !== null)
-			args = content.slice(prefix.length).trim().split(/\s+/g);
+			content = content.slice(prefix.length);
 		else
-			args = content.replace(/<@!?(\d+)>/g, (_, id: string) => {
-				if (id === this.context.client.user?.id) return '';
+			content = content
+				.replace(/<@!?(\d+)>/g, (_, id: string) => id === this.context.client.user!.id ? '' : `<@${id}>`);
 
-				return `<@${id}>`;
-			}).trim().split(/\s+/g);
-
+		const args = content.trim().split(/\s+/g);
 		commandName = args.shift() ?? null;
 
 		return { commandName, args };
