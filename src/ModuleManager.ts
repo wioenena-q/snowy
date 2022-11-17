@@ -81,9 +81,10 @@ export class ModuleManager extends EventEmitter {
 
 	/**
 	 * Load the modules.
+	 * @param {ModuleManagerLoadFilterFunction} filter The filter function.
 	 * @returns {this}
 	 */
-	public async loadModules(filter = (_path: string) => true): Promise<this> {
+	public async loadModules(filter: ModuleManagerLoadFilterFunction = (_path: string) => true): Promise<this> {
 		const filePaths = this.getModuleFilePaths();
 		for await (const filePath of filePaths)
 			if (filter(filePath)) await this.loadModule(filePath);
@@ -197,3 +198,5 @@ export interface ModuleManagerEvents {
 }
 
 export type ExtendedSnowyModuleConstructor = new (context: SnowyContext, options: SnowyModuleOptions & { path: string }) => SnowyModule;
+
+export type ModuleManagerLoadFilterFunction = (path: string) => boolean;
