@@ -28,6 +28,8 @@
       "error",
       "multi"
     ],
-    "@typescript-eslint/strict-boolean-expressions": "off"
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "no-useless-return": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
   }
 }
