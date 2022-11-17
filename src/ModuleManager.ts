@@ -6,7 +6,7 @@ import { SnowyContext } from './SnowyContext';
 import { ErrorTags, SnowyError } from './SnowyError';
 import { SnowyModule, SnowyModuleOptions } from './SnowyModule';
 import { UniqueMap } from './UniqueMap';
-import { isString } from './Utils';
+import { isObject, isString } from './Utils';
 
 /**
  * @classdesc The manager class for the bot.
@@ -23,6 +23,9 @@ export class ModuleManager extends EventEmitter {
 	 */
 	public constructor(client: Client, options: ModuleManagerOptions) {
 		super();
+		if (!isObject<ModuleManagerOptions>(options))
+			throw new SnowyError(ErrorTags.InvalidArgument, 'options', 'The options must be an object.');
+
 		this.#modules = new UniqueMap();
 		this.#options = options;
 		this.#context = new SnowyContext(client, this);
@@ -54,6 +57,7 @@ export class ModuleManager extends EventEmitter {
 	 */
 	public async loadModule(path: string, isReload = false): Promise<SnowyModule | undefined> {
 		const { default: mod } = await import(path);
+
 		if (mod === undefined) return;
 		// Create a new instance of the module.
 		if (SnowyModule.isSnowyModuleConstructor(mod)) {
@@ -63,10 +67,11 @@ export class ModuleManager extends EventEmitter {
 			});
 
 			// Set props.
-			instance.path = path;
+			Reflect.set(instance, 'path', path);
+
 			if (this.options.automateCategories && !isString(instance.category)) {
 				const category = path.split(sep).slice(-2).at(0);
-				if (category !== undefined) instance.category = category;
+				if (category !== undefined) Reflect.set(instance, 'category', category);
 			}
 
 			this.register(instance, isReload);
@@ -78,7 +83,7 @@ export class ModuleManager extends EventEmitter {
 	 * Load the modules.
 	 * @returns {this}
 	 */
-	public async loadModules(filter = (path: string) => true): Promise<this> {
+	public async loadModules(filter = (_path: string) => true): Promise<this> {
 		const filePaths = this.getModuleFilePaths();
 		for await (const filePath of filePaths)
 			if (filter(filePath)) await this.loadModule(filePath);
