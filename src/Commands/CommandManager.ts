@@ -21,6 +21,13 @@ export class CommandManager extends ModuleManager {
 		this.prefix = options.prefix;
 	}
 
+	/**
+	 *
+	 * Register a command.
+	 * @param {RawCommand | SlashCommand} command The command to register.
+	 * @param {boolean?} [isReload] Whether the command is being reloaded.
+	 * @returns {this}
+	 */
 	public override register(command: RawCommand | SlashCommand, isReload?: boolean): this {
 		if (command instanceof RawCommand)
 			command.aliases.forEach(alias => {
