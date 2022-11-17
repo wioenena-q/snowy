@@ -48,7 +48,7 @@ export class CommandManager extends ModuleManager {
 		this.context.client.once('ready', () => {
 			this.context.client.on('messageCreate', async (message) => {
 				const prefix = await this.getPrefix(message);
-				if (prefix === null && this.context.client.user && !message.mentions.users.has(this.context.client.user.id)) return;
+				if (prefix === null && !message.mentions.users.has(this.context.client.user!.id)) return;
 				const { commandName, args } = this.getCommandNameAndArgs(prefix, message.content);
 
 				if (!isString(commandName)) return;
