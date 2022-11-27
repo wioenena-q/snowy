@@ -1,7 +1,7 @@
 import type { Message, PermissionsString } from 'discord.js';
 import type { SnowyContext } from '../SnowyContext';
 import { ErrorTags, SnowyError } from '../SnowyError';
-import { getType, MaybeArray, MaybePromise } from '../Utils';
+import { getType, MaybeArray, MaybePromise, Nullable } from '../Utils';
 import { BaseCommand, BaseCommandOptions } from './BaseCommand';
 
 export abstract class RawCommand extends BaseCommand {
@@ -69,6 +69,12 @@ export type RawCommandPrefixFunction = (message: Message) => MaybePromise<MaybeA
 
 export type ValidPrefixesDefinitions = MaybeArray<string> | RawCommandPrefixFunction;
 
-export type RawCommandPermissionFunction = (message: Message) => MaybePromise<boolean>;
+/**
+ * The function that checks the permissions of the user.
+ * @function
+ * @param {Message} message The message that triggered the command.
+ * @returns {MaybePromise<Nullable<MaybeArray<PermissionsString>>>} The permissions that the user is missing. Return null if you want to indicate that it has permissions.
+ */
+export type RawCommandPermissionFunction = (message: Message) => MaybePromise<Nullable<MaybeArray<PermissionsString>>>;
 
 export type ValidPermissionDefinitions = MaybeArray<PermissionsString> | RawCommandPermissionFunction;
