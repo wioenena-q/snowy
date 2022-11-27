@@ -1,10 +1,9 @@
-import type { GuildMember, Message, PermissionsString } from 'discord.js';
+import type { Message, PartialMessage, PermissionsString } from 'discord.js';
 import type { Client } from '../Client';
 import { ModuleManager, ModuleManagerEvents, ModuleManagerLoadFilterFunction, ModuleManagerOptions } from '../ModuleManager';
-import { ErrorTags, SnowyError } from '../SnowyError';
 import { UniqueMap } from '../UniqueMap';
-import { getType, isFunction, isString, MaybeArray, MaybePromise, Nullable } from '../Utils';
-import { RawCommand, ValidPermissionDefinitions } from './RawCommand';
+import { MaybeArray, MaybePromise, Nullable, toTheArray, toTheCallable } from '../Utils';
+import { RawCommand, RawCommandPrefixFunction, ValidPrefixesDefinitions } from './RawCommand';
 import type { SlashCommand } from './SlashCommand';
 
 /**
@@ -12,13 +11,19 @@ import type { SlashCommand } from './SlashCommand';
  * @extends {ModuleManager}
  */
 export class CommandManager extends ModuleManager {
-	public readonly prefix: MaybeArray<string> | CommandManagerPrefixFunction;
-	#aliases: UniqueMap<string, string> = new UniqueMap();
+	readonly aliases: UniqueMap<string, string> = new UniqueMap();
+	readonly prefixes = new Map<Function, Set<string>>();
+	readonly prefix: CommandManagerPrefixFunction;
+	readonly allowEdits: boolean;
+	readonly allowMention: boolean;
+	readonly guildOnly: boolean;
 
 	public constructor(client: Client, options: CommandManagerOptions) {
 		super(client, options);
-
-		this.prefix = options.prefix;
+		this.prefix = toTheCallable(options.prefix ?? ['?']).bind(this);
+		this.allowEdits = options.allowEdits ?? false;
+		this.allowMention = options.allowMention ?? false;
+		this.guildOnly = options.guildOnly ?? false;
 	}
 
 	/**
@@ -29,51 +34,34 @@ export class CommandManager extends ModuleManager {
 	 * @returns {this}
 	 */
 	public override register(command: RawCommand | SlashCommand, isReload?: boolean): this {
-		if (command instanceof RawCommand)
-			command.aliases.forEach(alias => {
-				if (!this.aliases.has(alias))
-					this.aliases.set(alias, command.id);
-			});
-
+		if (command instanceof RawCommand) {
+			command.aliases.forEach(alias => this.aliases.set(alias, command.id));
+			command.prefix = toTheCallable(command.prefix).bind(command);
+			this.prefixes.set((command.prefix as RawCommandPrefixFunction), new Set([command.id]));
+			command.userPermissions = toTheCallable(command.userPermissions).bind(command);
+			command.botPermissions = toTheCallable(command.botPermissions).bind(command);
+		}
 		return super.register(command, isReload);
 	}
 
 	/**
 	 * Load a modules.
 	 * @param {ModuleManagerLoadFilterFunction} filter The filter function.
-	 * @returns
+	 * @returns {Promise<this>}
 	 */
 	public override async loadModules(filter?: ModuleManagerLoadFilterFunction): Promise<this> {
 		await super.loadModules(filter);
 		this.context.client.once('ready', () => {
 			this.context.client.on('messageCreate', async (message) => {
-				const prefix = await this.getPrefix(message);
-				if (prefix === null && !message.mentions.users.has(this.context.client.user!.id)) return;
-				const { commandName, args } = this.getCommandNameAndArgs(prefix, message.content);
-
-				if (!isString(commandName)) return;
-
-				const alias = this.aliases.get(commandName);
-				if (!alias) return;
-				const command = this.modules.get(alias) as RawCommand;
-				if (!command) return;
-
-				if (command.botPermissions !== null) {
-					const missing = await this.hasPermissions(command.botPermissions!, message, message.guild!.members.me!) as PermissionsString[];
-					if (missing !== null) {
-						this.emit('missingPermissions', message, command, isFunction(command.botPermissions) ? null : missing, 'client');
-						return;
-					}
-				}
-
-				if (command.userPermissions !== null) {
-					const missing = await this.hasPermissions(command.userPermissions!, message) as PermissionsString[];
-					if (missing !== null) {
-						this.emit('missingPermissions', message, command, isFunction(command.userPermissions) ? null : missing, 'user');
-						return;
-					}
-				};
+				void this.handle(message);
 			});
+
+			if (this.allowEdits)
+				this.context.client.on('messageUpdate', async (oldMessage, newMessage) => {
+					if (oldMessage.content === newMessage.content) return;
+
+					void this.handle(newMessage);
+				});
 
 			this.context.client.on('interactionCreate', (_interaction) => {
 				// TODO: Implement slash command handling.
@@ -83,78 +71,98 @@ export class CommandManager extends ModuleManager {
 	}
 
 	/**
-	 *
-	 * Checks if the given member|bot has the given permissions.
-	 * @param {ValidPermissionDefinitions} perms The permissions to check.
-	 * @param {Message} message The message to check the permissions for.
-	 * @param {GuildMember?} [member] The member to check the permissions for.
-	 * @returns {Promise<boolean>} Whether the member|bot has the permissions.
+	 * Handles a message.
+	 * @param {Message | PartialMessage} message Message to handle.
+	 * @returns {Promise<void>}
 	 */
-	private async hasPermissions(perms: ValidPermissionDefinitions, message: Message, member?: GuildMember): Promise<unknown> {
-		if (isFunction<boolean>(perms))
-			return perms(message);
-		else {
-			member = member ?? message.member as GuildMember;
-			if (member.permissions.has(perms as PermissionsString))
-				return null;
-			else
-				return member.permissions.missing(perms as PermissionsString);
+	private async handle(message: Message | PartialMessage) {
+		if (message.partial) await message.fetch();
+
+		const { command, args } = await this.parseCommand(message as Message);
+
+		if (command === null) return;
+		console.log(command.id, args);
+	}
+
+	/**
+	 * Parse a command from message content.
+	 * @param {Message} message Message to parse.
+	 * @returns {Promise<ParsedCommand>}
+	 */
+	private async parseCommand(message: Message): Promise<ParsedCommand> {
+		const result: ParsedCommand = {
+			args: null,
+			command: null
+		};
+
+		let prefixes = toTheArray<string>(await this.prefix(message));
+
+		if (this.allowMention) {
+			const mentions = [`<@${this.context.client.user!.id}>`, `<@!${this.context.client.user!.id}>`];
+			prefixes.push(...mentions);
 		}
-	};
 
-	/**
-	 *
-	 * Gets the command name and arguments from the given message content.
-	 * @param {Nullable<string>} prefix The prefix of the message.
-	 * @param {string} content The content of the message.
-	 * @returns {{ commandName: Nullable<string>; args: string[]}} The command name and arguments.
-	 */
-	private getCommandNameAndArgs(prefix: Nullable<string>, content: string): { commandName: Nullable<string>, args: string[] } {
-		let commandName: Nullable<string> = null;
+		let prefix = this.findPrefixFromArray(message, prefixes);
 
-		if (prefix !== null)
-			content = content.slice(prefix.length);
-		else
-			content = content
-				.replace(/<@!?(\d+)>/g, (_, id: string) => id === this.context.client.user!.id ? '' : `<@${id}>`);
+		// Find the command prefixes.
+		if (prefix === null)
+			for (const [prefixFn, cmdIds] of this.prefixes) {
+				prefixes = toTheArray<string>(await prefixFn(message));
+				prefix = this.findPrefixFromArray(message, prefixes);
 
-		const args = content.trim().split(/\s+/g);
-		commandName = args.shift() ?? null;
+				if (prefix === null) continue;
+				result.args = message.content.slice(prefix.length).trim().split(/\s+/g);
+				const cmdIdFromMsg = result.args.shift()!;
+				for (const cmdId of cmdIds) {
+					const alias = this.aliases.get(cmdIdFromMsg);
 
-		return { commandName, args };
+					if (alias === cmdId) {
+						result.command = this.modules.get(cmdId) as RawCommand;
+						return result;
+					}
+				}
+			}
+		else {
+			result.args = message.content.slice(prefix.length).trim().split(/\s+/g);
+			const cmdIdFromMsg = result.args.shift()!;
+			const alias = this.aliases.get(cmdIdFromMsg);
+			if (!alias) return result;
+			result.command = this.modules.get(alias) as RawCommand;
+		}
+
+		return result;
 	}
 
 	/**
-	 * Gets the prefix for the given message.
-	 * @param {Message} message The message to get the prefix from.
-	 * @returns {Promise<string | null>} The prefix for the message.
+	 * Find a prefix from an array of prefixes.
+	 * @param message Message to find prefix from.
+	 * @param prefixes Prefixes to find.
+	 * @returns {Nullable<string>}
 	 */
-	private async getPrefix(message: Message): Promise<string | null> {
-		let prefix: Nullable<string> = null;
-
-		if (isFunction<string>(this.prefix)) {
-			const ret = await this.prefix(message);
-			if (Array.isArray(ret))
-				prefix = ret.find(p => message.content.startsWith(p)) ?? null;
-			else if (!isString(ret))
-				throw new SnowyError(ErrorTags.VALUE_IS_NOT_OF_DESIRED_TYPE, 'string', 'prefix', getType(ret));
-			else
-				if (message.content.startsWith(ret))
-					prefix = ret;
-		} else if (Array.isArray(this.prefix))
-			prefix = this.prefix.find((p) => message.content.startsWith(p)) as string ?? null;
-		else if (isString(this.prefix) && message.content.startsWith(this.prefix))
-			prefix = this.prefix;
-
-		return prefix;
+	private findPrefixFromArray(message: Message, prefixes: string[]) {
+		return prefixes.find(prefix => message.content.startsWith(prefix)) ?? null;
 	}
-
-	public get aliases(): UniqueMap<string, string> { return this.#aliases; }
 }
 
 export interface CommandManagerOptions extends ModuleManagerOptions {
-	prefix: MaybeArray<string> | CommandManagerPrefixFunction
+	/**
+	 * The prefixes to use.
+	 */
+	prefix?: ValidPrefixesDefinitions
+	/**
+	 * So they can use the commands by tagging the bot. (Not for slash commands)
+	 */
 	allowMention?: boolean
+
+	/**
+	 * Whether to allow edits to run the command. (Not for slash commands)
+	 */
+	allowEdits?: boolean
+
+	/**
+	 * Whether to run commands only on the guild.
+	 */
+	guildOnly?: boolean
 }
 
 export type CommandManagerPrefixFunction = (message: Message) => MaybePromise<MaybeArray<string>>;
@@ -169,4 +177,9 @@ export interface CommandManager extends ModuleManager {
 
 export interface CommandManagerEvents extends ModuleManagerEvents {
 	'missingPermissions': (message: Message, command: RawCommand, missing: PermissionsString[] | null, type: 'client' | 'user') => void
+}
+
+interface ParsedCommand {
+	command: Nullable<RawCommand>
+	args: Nullable<string[]>
 }
