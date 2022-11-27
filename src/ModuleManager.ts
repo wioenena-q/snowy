@@ -16,7 +16,7 @@ export class ModuleManager extends EventEmitter {
 	/**
 	 * @type {UniqueMap<string, SnowyModule>} The modules of the bot.
 	 */
-	readonly modules: UniqueMap<string, SnowyModule>;
+	readonly modules: UniqueMap<SnowyModule>;
 	readonly path: string;
 	readonly automateCategories: boolean;
 	/**
