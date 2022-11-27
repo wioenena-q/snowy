@@ -13,9 +13,16 @@ import { isObject, isString } from './Utils';
  * @extends {EventEmitter}
  */
 export class ModuleManager extends EventEmitter {
-	#modules: UniqueMap<string, SnowyModule>;
-	#options: ModuleManagerOptions;
-	#context: SnowyContext;
+	/**
+	 * @type {UniqueMap<string, SnowyModule>} The modules of the bot.
+	 */
+	readonly modules: UniqueMap<string, SnowyModule>;
+	readonly path: string;
+	readonly automateCategories: boolean;
+	/**
+	 * @type {SnowyContext} The context of the manager.
+	 */
+	readonly context: SnowyContext;
 
 	/**
 	 *
@@ -26,9 +33,10 @@ export class ModuleManager extends EventEmitter {
 		if (!isObject<ModuleManagerOptions>(options))
 			throw new SnowyError(ErrorTags.InvalidArgument, 'options', 'The options must be an object.');
 
-		this.#modules = new UniqueMap();
-		this.#options = options;
-		this.#context = new SnowyContext(client, this);
+		this.modules = new UniqueMap();
+		this.context = new SnowyContext(client, this);
+		this.path = options.path;
+		this.automateCategories = options.automateCategories ?? false;
 	}
 
 	/**
@@ -45,7 +53,7 @@ export class ModuleManager extends EventEmitter {
 				if (file.isDirectory()) readDir(filePath);
 				else result.push(filePath);
 			});
-		})(this.#options.path);
+		})(this.path);
 
 		return result;
 	}
@@ -69,7 +77,7 @@ export class ModuleManager extends EventEmitter {
 			// Set props.
 			Reflect.set(instance, 'path', path);
 
-			if (this.options.automateCategories && !isString(instance.category)) {
+			if (this.automateCategories && !isString(instance.category)) {
 				const category = path.split(sep).slice(-2).at(0);
 				if (category !== undefined) Reflect.set(instance, 'category', category);
 			}
@@ -121,7 +129,7 @@ export class ModuleManager extends EventEmitter {
 	 * @returns {this}
 	 */
 	public register(mod: SnowyModule, isReload = false): this {
-		this.#modules.set(mod.id, mod);
+		this.modules.set(mod.id, mod);
 		if (!isReload) this.emit('moduleCreate', mod);
 		return this;
 	}
@@ -132,7 +140,7 @@ export class ModuleManager extends EventEmitter {
 	 * @returns {void}
 	 */
 	public deregister(mod: SnowyModule): void {
-		this.#modules.delete(mod.id);
+		this.modules.delete(mod.id);
 		if (mod.path !== null && Reflect.has(require.cache, mod.path)) Reflect.deleteProperty(require.cache, mod.path);
 	}
 
@@ -161,26 +169,17 @@ export class ModuleManager extends EventEmitter {
 
 		return this;
 	}
-
-	/**
-	 * @returns {UniqueMap<string, SnowyModule>} The modules of the bot.
-	 */
-	public get modules(): UniqueMap<string, SnowyModule> { return this.#modules; }
-
-	/**
-	 * @returns {ModuleManagerOptions} The options of the manager.
-	 */
-	public get options(): ModuleManagerOptions { return this.#options; }
-
-	/**
-	 * @returns {SnowyContext} The context of the manager.
-	 */
-	public get context(): SnowyContext { return this.#context; }
 }
 
 export interface ModuleManagerOptions {
-	path: string // The path to the modules.
-	automateCategories?: boolean // Whether to automate the categories of the modules.
+	/**
+	 * The path to the modules.
+	 */
+	path: string
+	/**
+	 * Whether to automate the categories of the modules.
+	 */
+	automateCategories?: boolean
 }
 
 export interface ModuleManager extends EventEmitter {
