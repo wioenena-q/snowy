@@ -9,7 +9,8 @@ export enum ErrorTags {
   MODULE_NOT_FOUND = 'MODULE_NOT_FOUND',
   EMITTER_NOT_FOUND = 'EMITTER_NOT_FOUND',
   INVALID_LISTENER_TYPE = 'INVALID_LISTENER_TYPE',
-  InvalidArgument = 'InvalidArgument'
+  InvalidArgument = 'InvalidArgument',
+  InvalidReturnType = 'InvalidReturnType',
 }
 
 /**
@@ -49,5 +50,6 @@ const tagToMessage: Record<ErrorTags, (...params: string[]) => string> = {
   [ErrorTags.MODULE_NOT_FOUND]: (modID: string) => `The module '${modID}' was not found.`,
   [ErrorTags.EMITTER_NOT_FOUND]: (emitterID: string) => `The emitter '${emitterID}' was not found.`,
   [ErrorTags.INVALID_LISTENER_TYPE]: (type: string) => `The listener type '${type}' is invalid.`,
-  [ErrorTags.InvalidArgument]: (argName: string, reason: string) => `Invalid argument: ${argName}. ${reason}`
+  [ErrorTags.InvalidArgument]: (argName: string, reason: string) => `Invalid argument: ${argName}. ${reason}`,
+  [ErrorTags.InvalidReturnType]: (reason: string) => `Invalid return type. ${reason}`
 };
