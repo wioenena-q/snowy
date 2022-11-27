@@ -11,7 +11,7 @@ import type { SlashCommand } from './SlashCommand';
  * @extends {ModuleManager}
  */
 export class CommandManager extends ModuleManager {
-	readonly aliases: UniqueMap<string, string> = new UniqueMap();
+	readonly aliases: UniqueMap<string> = new UniqueMap();
 	readonly prefixes = new Map<Function, Set<string>>();
 	readonly prefix: CommandManagerPrefixFunction;
 	readonly allowEdits: boolean;
