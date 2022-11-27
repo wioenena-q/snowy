@@ -1,9 +1,9 @@
-import type { Message, PartialMessage, PermissionsString } from 'discord.js';
+import type { GuildMember, Message, PartialMessage, PermissionsString } from 'discord.js';
 import type { Client } from '../Client';
 import { ModuleManager, ModuleManagerEvents, ModuleManagerLoadFilterFunction, ModuleManagerOptions } from '../ModuleManager';
 import { UniqueMap } from '../UniqueMap';
 import { MaybeArray, MaybePromise, Nullable, toTheArray, toTheCallable } from '../Utils';
-import { RawCommand, RawCommandPrefixFunction, ValidPrefixesDefinitions } from './RawCommand';
+import { RawCommand, RawCommandPermissionFunction, RawCommandPrefixFunction, ValidPrefixesDefinitions } from './RawCommand';
 import type { SlashCommand } from './SlashCommand';
 
 /**
@@ -77,11 +77,36 @@ export class CommandManager extends ModuleManager {
 	 */
 	private async handle(message: Message | PartialMessage) {
 		if (message.partial) await message.fetch();
-
 		const { command, args } = await this.parseCommand(message as Message);
-
 		if (command === null) return;
-		console.log(command.id, args);
+
+		const guildOnly = command.guildOnly ?? this.guildOnly;
+		if (guildOnly && !message.guild) return;
+
+		const missingUserPerms = await this.checkPermissions(message as Message, message.member!, command.userPermissions as RawCommandPermissionFunction);
+		if (missingUserPerms !== null)
+			this.emit('missingPermissions', message as Message, command, missingUserPerms, 'user');
+
+		const missingClientPerms = await this.checkPermissions(message as Message, message.guild!.members.me!, command.botPermissions as RawCommandPermissionFunction);
+		if (missingClientPerms !== null)
+			this.emit('missingPermissions', message as Message, command, missingClientPerms, 'client');
+
+		command.exec({} as any);
+	}
+
+	/**
+	 *
+	 * Check permission.
+	 * @param message - Message to check permissions.
+	 * @param member - Member to check permissions.
+	 * @param permissionsCallable - Permissions callable.
+	 * @returns {Promise<Nullable<PermissionsString[]>>}
+	 */
+	private async checkPermissions(message: Message, member: GuildMember, permissionsCallable: RawCommandPermissionFunction) {
+		const perms = toTheArray(await permissionsCallable(message));
+		if (perms === null) return null;
+		if (member.permissions.has(perms as PermissionsString[])) return null;
+		return member.permissions.missing(perms as PermissionsString[]);
 	}
 
 	/**
