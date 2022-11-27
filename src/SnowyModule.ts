@@ -30,7 +30,11 @@ export class SnowyModule {
 	 */
 	public readonly category?: Nullable<string>;
 
-	#context: SnowyContext;
+	/**
+	 * The context of the module.
+	 * @type {SnowyContext}
+	 */
+	readonly context: SnowyContext;
 
 	/**
 	 *
@@ -46,7 +50,7 @@ export class SnowyModule {
 		if (!isObject<SnowyModuleOptions>(options))
 			throw new SnowyError(ErrorTags.InvalidArgument, 'options', 'The options must be an object.');
 
-		this.#context = context;
+		this.context = context;
 		this.id = id;
 		this.reloadable = options.reloadable ?? true;
 		this.category = options.category ?? null;
@@ -58,7 +62,7 @@ export class SnowyModule {
 	 * @returns {void}
 	 */
 	public remove(): void {
-		this.#context.manager.remove(this.id);
+		this.context.manager.remove(this.id);
 	}
 
 	/**
@@ -67,7 +71,7 @@ export class SnowyModule {
 	 * @returns {Promise<void>}
 	 */
 	public async reload(): Promise<void> {
-		await this.#context.manager.reload(this.id);
+		await this.context.manager.reload(this.id);
 	}
 
 	public exec(..._: unknown[]): unknown {
@@ -81,13 +85,6 @@ export class SnowyModule {
 	 */
 	public static isSnowyModuleConstructor(value: unknown): value is ExtendedSnowyModuleConstructor {
 		return isFunction(value) && value.prototype instanceof SnowyModule;
-	}
-
-	/**
-	 * The context of the module.
-	 */
-	public get context(): SnowyContext {
-		return this.#context;
 	}
 }
 
